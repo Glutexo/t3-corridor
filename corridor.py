@@ -2,82 +2,85 @@
 
 import t3
 
+COLORS = {
+    'nothing': (0, 0, 0),  # Black.
+    'cursor':  (255, 255, 255)  # White.
+}
 
-class Field:
 
-    EMPTY  = 0
-    CURSOR = 1
+class Thing:
 
-    COLORS = {
-        CURSOR: (255, 255, 255),  # White.
-        EMPTY: (0, 0, 0)  # Black.
-    }
+    def __init__(self, field, x, y):
+        self.field = field
+        self.position = (x, y)
 
-    state = [
-        [EMPTY, EMPTY,  EMPTY],
-        [EMPTY, CURSOR, EMPTY],
-        [EMPTY, EMPTY,  EMPTY]
-    ]
-    WIDTH  = len(state[0])
-    HEIGHT = len(state)
 
-    def each(self):
-        for y, row in enumerate(self.state):
-            for x, value in enumerate(row):
-                yield x, y, value
+class Cursor(Thing):
 
-    def set_by_position(self, position, value):
-        self.state[position[1]][position[0]] = value
+    def __init__(self, field, x, y):
+        super().__init__(field, x, y)
+        self.color = COLORS['cursor']
 
-    def get_by_position(self, position):
-        return self.state[position[1]][position[0]]
-
-    def display(self):
-        for x, y, value in self.each():
-            t3.display[x, y] = self.COLORS[value]
-
-    def cursor_position(self):
-        cursor_position = None
-
-        for x, y, value in self.each():
-            print(x, y, value)
-            if value == self.CURSOR:
-                cursor_position = [x, y]
-                # break
-
-        if cursor_position is None:
-            raise RuntimeError('Cursor lost!')
-
-        return cursor_position
-
-    def move_cursor(self, direction):
-        old_position = self.cursor_position()
-        new_position = list(old_position)
-
+    def move(self, direction):
         if direction == t3.left:
-            new_position[0] -= 1
+            position = (self.position[0] - 1, self.position[1])
         elif direction == t3.right:
-            new_position[0] += 1
+            position = (self.position[0] + 1, self.position[1])
         elif direction == t3.up:
-            new_position[1] -= 1
+            position = (self.position[0], self.position[1] - 1)
         elif direction == t3.down:
-            new_position[1] += 1
+            position = (self.position[0], self.position[1] + 1)
         else:
             raise ValueError('Invalid direction.')
 
         # Stay inside the field.
-        if new_position[0] >= 0 and new_position[0] < self.WIDTH and new_position[1] >= 0 and new_position[1] < self.HEIGHT:
-            self.set_by_position(old_position, self.EMPTY)
-            self.set_by_position(new_position, self.CURSOR)
-            self.display()
+        if 0 <= position[0] < self.field.WIDTH and 0 <= position[1] < self.field.HEIGHT:
+            self.field.clear(self)
+            self.position = position
+            self.field.draw(self)
+
+
+class Field:
+
+    WIDTH  = 3
+    HEIGHT = 3
+
+    def __init__(self):
+        self.things = set()
+
+    def add(self, thing):
+        if thing.field != self:
+            raise ValueError('Trying to add a thing from another field.')
+        self.things.add(thing)
+
+    def clear(self, what):
+        try:
+            position = what.position
+        except AttributeError:
+            position = what
+
+        t3.display[position] = COLORS['nothing']
+
+    def draw(self, thing=None):
+        if thing:
+            things = {thing}
+        else:
+            things = self.things
+
+        for thing in things:
+            t3.display[thing.position] = thing.color
 
 
 def main():
     field = Field()
-    field.display()
+
+    cursor = Cursor(field, 1, 1)
+    field.add(cursor)
+
+    field.draw()
 
     while True:
         result = yield t3.wait_for_input()
         for direction in t3.up, t3.down, t3.left, t3.right:
-            if(result.pressed[direction]):
-                field.move_cursor(direction)
+            if result.pressed[direction]:
+                cursor.move(direction)
