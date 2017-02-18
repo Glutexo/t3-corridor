@@ -3,10 +3,6 @@
 import t3
 
 
-class OutOfBoundError(ValueError):
-    """"""
-
-
 class Field:
 
     EMPTY  = 0
@@ -50,7 +46,7 @@ class Field:
                 # break
 
         if cursor_position is None:
-            raise RuntimeError('Cursor not found in state!')
+            raise RuntimeError('Cursor lost!')
 
         return cursor_position
 
@@ -69,15 +65,11 @@ class Field:
         else:
             raise ValueError('Invalid direction.')
 
-        try:
-            if new_position[0] < 0 or new_position[0] > self.WIDTH - 1 or new_position[1] < 0 or new_position[1] > self.HEIGHT - 1:
-                raise OutOfBoundError
-
+        # Stay inside the field.
+        if new_position[0] >= 0 and new_position[0] < self.WIDTH and new_position[1] >= 0 and new_position[1] < self.HEIGHT:
             self.set_by_position(old_position, self.EMPTY)
             self.set_by_position(new_position, self.CURSOR)
             self.display()
-        except OutOfBoundError:
-            """"""
 
 
 def main():
