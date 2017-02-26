@@ -51,7 +51,7 @@ class Field:
 
     def add(self, thing):
         if thing.field != self:
-            raise ValueError('Trying to add a thing from another field.')
+            raise ValueError('Can’t add a Thing from another field.')
         self.things.add(thing)
 
     def clear(self, what):
@@ -64,6 +64,9 @@ class Field:
 
     def draw(self, thing=None):
         if thing:
+            if thing not in self.things:
+                raise ValueError('Can’t draw an unregistered Thing.')
+
             things = {thing}
         else:
             things = self.things
