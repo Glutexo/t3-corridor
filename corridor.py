@@ -13,6 +13,7 @@ class Thing:
     def __init__(self, field, x, y):
         self.field = field
         self.position = (x, y)
+        self.color = COLORS['nothing'] # Default. To be overridden.
 
 
 class Cursor(Thing):
