@@ -7,6 +7,18 @@ COLORS = {
     'cursor':  (255, 255, 255)  # White.
 }
 
+DISPLAY_WIDTH = 3
+DISPLAY_HEIGHT = 3
+
+
+def position(what):
+    try:
+        pos = what.position
+    except AttributeError:
+        pos = what
+
+    return pos
+
 
 class Thing:
 
@@ -43,11 +55,16 @@ class Cursor(Thing):
 
 class Field:
 
-    WIDTH  = 3
-    HEIGHT = 3
+    WIDTH = 5
+    HEIGHT = 5
 
     def __init__(self):
         self.things = set()
+        self.viewport = (1, 1)
+
+    def assert_valid_thing(self, thing):
+        if thing not in self.things:
+            raise ValueError('Can’t draw an unregistered Thing.')
 
     def add(self, thing):
         if thing.field != self:
@@ -55,30 +72,36 @@ class Field:
         self.things.add(thing)
 
     def clear(self, what):
-        try:
-            position = what.position
-        except AttributeError:
-            position = what
-
-        t3.display[position] = COLORS['nothing']
+        display_position = self.display_position(what)
+        if display_position:
+            t3.display[display_position] = COLORS['nothing']
 
     def draw(self, thing=None):
         if thing:
-            if thing not in self.things:
-                raise ValueError('Can’t draw an unregistered Thing.')
-
+            self.assert_valid_thing(thing)
             things = {thing}
         else:
             things = self.things
 
         for thing in things:
-            t3.display[thing.position] = thing.color
+            display_position = self.display_position(thing)
+            if display_position:
+                t3.display[display_position] = thing.color
+
+    def display_position(self, what):
+        pos = position(what)
+        viewport_pos = (pos[0] - self.viewport[0], pos[1] - self.viewport[1])
+        if 0 <= viewport_pos[0] < DISPLAY_WIDTH and 0 <= viewport_pos[1] < DISPLAY_HEIGHT:
+            display_pos = viewport_pos
+        else:
+            display_pos = None
+        return display_pos
 
 
 def main():
     field = Field()
 
-    cursor = Cursor(field, 1, 1)
+    cursor = Cursor(field, 2, 2)
     field.add(cursor)
 
     field.draw()
