@@ -20,6 +20,10 @@ def position(what):
     return pos
 
 
+def validate_position(x, y):
+    return 0 <= x < Field.WIDTH and 0 <= y < Field.HEIGHT
+
+
 class Thing:
 
     def __init__(self, field, x, y):
@@ -47,7 +51,7 @@ class Cursor(Thing):
             raise ValueError('Invalid direction.')
 
         # Stay inside the field.
-        if 0 <= position[0] < self.field.WIDTH and 0 <= position[1] < self.field.HEIGHT:
+        if validate_position(*position):
             self.field.clear(self)
             self.position = position
             self.field.draw(self)
