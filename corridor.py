@@ -2,69 +2,68 @@
 
 import t3
 
-COLORS = {
-    'nothing': (0, 0, 0),  # Black.
-    'cursor':  (255, 255, 255)  # White.
-}
 
-DISPLAY_WIDTH = 3
-DISPLAY_HEIGHT = 3
+class Position:
 
-
-def position(what):
-    try:
-        pos = what.position
-    except AttributeError:
-        pos = what
-
-    return pos
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
 
 
-def validate_position(x, y):
-    return 0 <= x < Field.WIDTH and 0 <= y < Field.HEIGHT
+class Dimensions:
+
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
 
 
 class Thing:
 
-    def __init__(self, field, x, y):
+    def __init__(self, field, position):
         self.field = field
-        self.position = (x, y)
+        self.position = position
         self.color = COLORS['nothing'] # Default. To be overridden.
+
+
+class Color:
+
+    def __init__(self, red, green, blue):
+        self.red = red
+        self.green = green
+        self.blue = blue
 
 
 class Cursor(Thing):
 
-    def __init__(self, field, x, y):
-        super().__init__(field, x, y)
+    def __init__(self, field, position):
+        super().__init__(field, position)
         self.color = COLORS['cursor']
 
     def move(self, direction):
         if direction == t3.left:
-            position = (self.position[0] - 1, self.position[1])
+            position = Position(self.position.x - 1, self.position.y)
         elif direction == t3.right:
-            position = (self.position[0] + 1, self.position[1])
+            position = Position(self.position.x + 1, self.position.y)
         elif direction == t3.up:
-            position = (self.position[0], self.position[1] - 1)
+            position = Position(self.position.x, self.position.y - 1)
         elif direction == t3.down:
-            position = (self.position[0], self.position[1] + 1)
+            position = Position(self.position.x, self.position.y + 1)
         else:
             raise ValueError('Invalid direction.')
 
         # Stay inside the field.
-        if validate_position(*position):
-            self.field.clear(self)
+        if self.field.validate_position(position):
+            self.field.clear(self.position)
             self.position = position
             self.field.draw(self)
 
 
 class Field:
 
-    WIDTH = 5
-    HEIGHT = 5
-
-    def __init__(self):
+    def __init__(self, dimensions, viewport):
         self.things = set()
-        self.viewport = (1, 1)
+        self.dimensions = dimensions
+        self.viewport = viewport
 
     def assert_valid_thing(self, thing):
         if thing not in self.things:
@@ -75,10 +74,10 @@ class Field:
             raise ValueError('Can’t add a Thing from another field.')
         self.things.add(thing)
 
-    def clear(self, what):
-        display_position = self.display_position(what)
+    def clear(self, position):
+        display_position = self.display_position(position)
         if display_position:
-            t3.display[display_position] = COLORS['nothing']
+            display(display_position, COLORS['nothing'])
 
     def draw(self, thing=None):
         if thing:
@@ -88,24 +87,40 @@ class Field:
             things = self.things
 
         for thing in things:
-            display_position = self.display_position(thing)
+            display_position = self.display_position(thing.position)
             if display_position:
-                t3.display[display_position] = thing.color
+                display(display_position, thing.color)
 
-    def display_position(self, what):
-        pos = position(what)
-        viewport_pos = (pos[0] - self.viewport[0], pos[1] - self.viewport[1])
-        if 0 <= viewport_pos[0] < DISPLAY_WIDTH and 0 <= viewport_pos[1] < DISPLAY_HEIGHT:
-            display_pos = viewport_pos
+    def display_position(self, actual_position):
+        display_position = Position(actual_position.x - self.viewport.x, actual_position.y - self.viewport.y)
+        if 0 <= display_position.x < DISPLAY_DIMENSIONS.width and 0 <= display_position.y < DISPLAY_DIMENSIONS.height:
+            valid_display_position = display_position
         else:
-            display_pos = None
-        return display_pos
+            valid_display_position = None
+        return valid_display_position
 
+    def validate_position(self, position):
+        return 0 <= position.x < self.dimensions.width and 0 <= position.y < self.dimensions.height
+
+
+def display(position, color):
+    t3.display[position.x, position.y] = (color.red, color.green, color.blue)
+
+
+COLORS = {
+    'nothing': Color(0, 0, 0),  # Black.
+    'cursor':  Color(255, 255, 255)  # White.
+}
+
+DISPLAY_DIMENSIONS = Dimensions(3, 3)
+FIELD_DIMENSIONS = Dimensions(5, 5)
+INITIAL_VIEWPORT = Position(1, 1)
+INITIAL_CURSOR_POSITON = Position(2, 2)
 
 def main():
-    field = Field()
+    field = Field(FIELD_DIMENSIONS, INITIAL_VIEWPORT)
 
-    cursor = Cursor(field, 2, 2)
+    cursor = Cursor(field, INITIAL_CURSOR_POSITON)
     field.add(cursor)
 
     field.draw()
