@@ -62,10 +62,6 @@ class Field:
         self.things = set()
         self.viewport = (1, 1)
 
-    def assert_valid_thing(self, thing):
-        if thing not in self.things:
-            raise ValueError('Can’t draw an unregistered Thing.')
-
     def add(self, thing):
         if thing.field != self:
             raise ValueError('Can’t add a Thing from another field.')
@@ -78,7 +74,6 @@ class Field:
 
     def draw(self, thing=None):
         if thing:
-            self.assert_valid_thing(thing)
             things = {thing}
         else:
             things = self.things
