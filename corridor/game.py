@@ -1,15 +1,5 @@
-# T3 Cartridge
-
-import t3
-
-COLORS = {
-    'nothing': (0, 0, 0),  # Black.
-    'cursor':  (255, 255, 255)  # White.
-}
-
-DISPLAY_WIDTH = 3
-DISPLAY_HEIGHT = 3
-
+from corridor.constants import COLORS, DISPLAY_WIDTH, DISPLAY_HEIGHT
+from t3 import display, down, left, right, up
 
 def position(what):
     try:
@@ -35,13 +25,13 @@ class Cursor(Thing):
         self.color = COLORS['cursor']
 
     def move(self, direction):
-        if direction == t3.left:
+        if direction == left:
             position = (self.position[0] - 1, self.position[1])
-        elif direction == t3.right:
+        elif direction == right:
             position = (self.position[0] + 1, self.position[1])
-        elif direction == t3.up:
+        elif direction == up:
             position = (self.position[0], self.position[1] - 1)
-        elif direction == t3.down:
+        elif direction == down:
             position = (self.position[0], self.position[1] + 1)
         else:
             raise ValueError('Invalid direction.')
@@ -70,7 +60,7 @@ class Field:
     def clear(self, what):
         display_position = self.display_position(what)
         if display_position:
-            t3.display[display_position] = COLORS['nothing']
+            display[display_position] = COLORS['nothing']
 
     def draw(self, thing=None):
         if thing:
@@ -81,7 +71,7 @@ class Field:
         for thing in things:
             display_position = self.display_position(thing)
             if display_position:
-                t3.display[display_position] = thing.color
+                display[display_position] = thing.color
 
     def display_position(self, what):
         pos = position(what)
@@ -91,18 +81,3 @@ class Field:
         else:
             display_pos = None
         return display_pos
-
-
-def main():
-    field = Field()
-
-    cursor = Cursor(field, 2, 2)
-    field.add(cursor)
-
-    field.draw()
-
-    while True:
-        result = yield t3.wait_for_input()
-        for direction in t3.up, t3.down, t3.left, t3.right:
-            if result.pressed[direction]:
-                cursor.move(direction)
