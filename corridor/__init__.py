@@ -1,10 +1,19 @@
 # T3 Cartridge
 
-import t3
+from corridor.constants import DISPLAY_WIDTH, DISPLAY_HEIGHT
 from corridor.game import Cursor, Field
+from corridor.ui import Viewport
+try:
+    import t3
+except ImportError:
+    pass  # T3 is not available withing tests.
+
 
 def main():
-    field = Field()
+    viewport = Viewport(field_size=(5, 5),
+                        viewport_size=(DISPLAY_WIDTH, DISPLAY_HEIGHT),
+                        viewport_pos=(1, 1))
+    field = Field(viewport=viewport)
 
     cursor = Cursor(field, 2, 2)
     field.add(cursor)

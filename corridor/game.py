@@ -1,5 +1,8 @@
 from corridor.constants import COLORS, DISPLAY_WIDTH, DISPLAY_HEIGHT
-from t3 import display, down, left, right, up
+try:
+    from t3 import display, down, left, right, up
+except ImportError:
+    pass  # T3 is not available withing tests.
 
 def position(what):
     try:
@@ -48,9 +51,9 @@ class Field:
     WIDTH = 5
     HEIGHT = 5
 
-    def __init__(self):
+    def __init__(self, viewport):
         self.things = set()
-        self.viewport = (1, 1)
+        self.viewport = viewport
 
     def add(self, thing):
         if thing.field != self:
@@ -58,9 +61,9 @@ class Field:
         self.things.add(thing)
 
     def clear(self, what):
-        display_position = self.display_position(what)
-        if display_position:
-            display[display_position] = COLORS['nothing']
+        viewport_pos = self.viewport.field_to_viewport(what.position)
+        if self.viewport.is_viewport_pos_visible(viewport_pos):
+            display[viewport_pos] = COLORS['nothing']
 
     def draw(self, thing=None):
         if thing:
@@ -69,15 +72,6 @@ class Field:
             things = self.things
 
         for thing in things:
-            display_position = self.display_position(thing)
-            if display_position:
-                display[display_position] = thing.color
-
-    def display_position(self, what):
-        pos = position(what)
-        viewport_pos = (pos[0] - self.viewport[0], pos[1] - self.viewport[1])
-        if 0 <= viewport_pos[0] < DISPLAY_WIDTH and 0 <= viewport_pos[1] < DISPLAY_HEIGHT:
-            display_pos = viewport_pos
-        else:
-            display_pos = None
-        return display_pos
+            viewport_pos = self.viewport.field_to_viewport(thing.position)
+            if self.viewport.is_viewport_pos_visible(viewport_pos):
+                display[viewport_pos] = thing.color
